@@ -9,7 +9,7 @@
 ## 🗺️ 10-Day Progress Tracker
 
 - [x] **Day 1: Project Setup & Database Design** *(Completed)*
-- [ ] **Day 2: User Authentication (Backend & Frontend)**
+- [x] **Day 2: User Authentication (Backend & Frontend)** *(Completed)*
 - [ ] **Day 3: Profile Management & Forgot Password**
 - [ ] **Day 4: Core Feed & Post CRUD (Backend)**
 - [ ] **Day 5: Core Feed & Post CRUD (Frontend)**
@@ -32,134 +32,162 @@
    - **Post Schema** (Content, image URL, author reference, announcement flag, category, likes array, timestamps)
    - **Comment Schema** (Text, author reference, post reference, timestamps)
 
+## 🛠️ Technologies Used & Why
+
+| Technology | What It Is | Why It Is Used in AgriChat |
+| :--- | :--- | :--- |
+| **Node.js** | JavaScript Runtime Environment | Executes backend code using non-blocking I/O for scalable performance. |
+| **Express.js** | Minimalist Web Framework | Simplifies routing, REST API controllers, and middleware chaining. |
+| **MongoDB** | NoSQL Document Database | Stores JSON/BSON records flexibly for dynamic farmer feed requirements. |
+| **Mongoose** | Object Data Modeling (ODM) | Enforces schema validation, types, default values, and references. |
+| **dotenv** | Environment Variable Manager | Keeps secrets (MongoDB URI, JWT secret) out of source control. |
+| **cors** | Cross-Origin Middleware | Allows the React frontend to communicate with the Express backend. |
+| **nodemon** | Dev Live Reloader | Auto-restarts backend on every file save. |
+
+## 🎤 Day 1 Interview Questions & Answers
+- **Q: Why MongoDB instead of MySQL?**  
+  *Ans:* MongoDB is a document-oriented NoSQL database that stores data in JSON/BSON format. It handles polymorphic data (nested likes, comments, dynamic crop tags) naturally without complex schema migrations.
+- **Q: What is Mongoose?**  
+  *Ans:* An ODM (Object Data Modeling) library that defines schemas, validates inputs, and manages relations between models before persisting into MongoDB.
+
+---
+
+# 📅 Day 2: User Authentication (Backend & Frontend)
+
+## 🎯 Day 2 Objectives
+1. Implement secure password hashing using **Bcrypt** with automatic pre-save hooks.
+2. Generate signed **JSON Web Tokens (JWT)** on successful registration and login.
+3. Build authentication middleware (`protect` and `authorize`) to guard private routes.
+4. Scaffold the modern **React (Vite)** frontend application inside `client/`.
+5. Implement **AuthContext** state management with persistent login via `localStorage`.
+6. Design and build responsive **Login** and **Register** views with English / Kannada support.
+
 ---
 
 ## 🛠️ Technologies Used & Why
 
 | Technology | What It Is | Why It Is Used in AgriChat |
 | :--- | :--- | :--- |
-| **Node.js** | JavaScript Runtime Environment | Allows executing JavaScript on the backend server. It uses an event-driven, non-blocking I/O model which makes it fast and scalable for handling numerous concurrent farmer queries. |
-| **Express.js** | Minimalist Web Framework for Node.js | Simplifies creating RESTful API endpoints, routing, error handling, and middleware integration without boilerplate HTTP code. |
-| **MongoDB** | NoSQL Document Database | Stores data in flexible, JSON-like BSON documents. Ideal for rapid iteration, nested data (like like arrays, comment references), and scales horizontally. |
-| **Mongoose** | Object Data Modeling (ODM) Library | Enforces strict schema validations, type casting, indexes, pre/post middleware hooks, and model-level relationships over MongoDB collections. |
-| **dotenv** | Environment Configuration Loader | Keeps sensitive keys (database connection strings, JWT secret keys, API ports) safe in `.env` files outside version control. |
-| **cors** | Cross-Origin Resource Sharing Middleware | Enables the React frontend (running on a different port like `http://localhost:5173`) to safely communicate with the backend server (`http://localhost:5000`). |
-| **nodemon** | Development Utility | Automatically restarts the Node server whenever file changes are detected during local development. |
+| **bcryptjs** | Password Hashing Library | Hashes passwords with 10 salt rounds before saving to MongoDB so plain text is never exposed. |
+| **jsonwebtoken (JWT)** | Stateless Token Generator | Issues cryptographically signed tokens containing user ID & role to authenticate API calls without server sessions. |
+| **React (Vite)** | Frontend Library & Next-Gen Bundler | Provides ultra-fast Single Page Application (SPA) experience with instant HMR. |
+| **Axios & Interceptors** | HTTP Client | Centralized HTTP requests with automatic `Authorization: Bearer <token>` injection on every protected call. |
+| **React Context API** | Global State Management | Distributes user profile, login status, and language settings across all components without prop drilling. |
+| **Lucide Icons** | Modern SVG Icon Pack | Crisp, accessible icons for agricultural tools, security shields, and user roles. |
 
 ---
 
 ## 💡 Simple Explanations: Key Concepts
 
-### 1. What is an ODM (Object Data Modeling) library?
-In raw MongoDB, you can insert any unstructured JSON document. **Mongoose** sits between your Node.js app and MongoDB like a blueprint manager. It makes sure every user has an email, every post has an author, and fields follow defined data types (String, Boolean, Date, ObjectId).
+### 1. How Does Password Hashing with Bcrypt Work?
+- **Plaintext vs Hash:** A plaintext password like `"mypassword123"` is transformed via a one-way mathematical algorithm into a 60-character scrambled string like `$2a$10$e8...`.
+- **Salt:** A random string (salt) is added to the password before hashing. This prevents "Rainbow Table" dictionary attacks.
+- **Verification:** When logging in, bcrypt hashes the entered password using the same salt and compares hashes (`bcrypt.compare()`). The original password is never decrypted.
 
-### 2. Why MongoDB instead of SQL (MySQL / PostgreSQL)?
-- **JSON-Native:** Data is transferred as JSON in JavaScript and stored natively as BSON in MongoDB—zero translation layer needed.
-- **Flexible Schema:** Farming data can evolve (e.g. adding crop tags, weather alerts, audio attachments later) without complex database migration scripts.
-- **Speed & Scale:** Ideal for community feed posts and social interaction streams.
-
-### 3. How do Relationships work in Mongoose?
-We use `mongoose.Schema.Types.ObjectId` with the `ref` property:
-```javascript
-author: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: 'User',
-  required: true
-}
 ```
-This stores the unique ID of the `User` document inside the `Post` document. Mongoose's `.populate('author')` feature allows fetching author details automatically when querying posts.
+User Input ("secret") + Salt (10 rounds) ---> Bcrypt Hash ($2a$10$k3J...) ---> MongoDB
+```
+
+### 2. How Does a JSON Web Token (JWT) Work?
+A JWT is made of three base64-encoded parts separated by dots (`.`):
+$$\text{Header} . \text{Payload} . \text{Signature}$$
+1. **Header:** Algorithm used (e.g. `HS256`).
+2. **Payload:** User claims (e.g. `{ id: "650a..", role: "farmer" }`).
+3. **Signature:** `HMACSHA256(Header + Payload, JWT_SECRET)`.
+
+**Flow:**
+```
+[ Farmer Login ] ---> POST /api/auth/login ---> Server verifies & signs JWT
+[ Browser ] <--- Receives & stores JWT in localStorage <--- Server
+[ Future Request ] ---> Header: Bearer <JWT> ---> Server checks signature with secret key
+```
 
 ---
 
-## 📂 Day 1 Folder Structure
+## 🔌 Day 2 API Reference
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/auth/register` | Public | Register new farmer/expert account with hashed password & JWT |
+| `POST` | `/api/auth/login` | Public | Authenticate credentials and return JWT token |
+| `GET` | `/api/auth/me` | Private (JWT) | Fetch currently authenticated user details |
+
+---
+
+## 📂 Updated Repository Structure
 
 ```
 AgriChat/
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   │   └── Navbar.jsx         # Header with Auth state & Language toggle
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx    # Global User & Auth state
+│   │   ├── pages/
+│   │   │   ├── Home.jsx           # Landing / Community Overview
+│   │   │   ├── Login.jsx          # Login card with quick demo fills
+│   │   │   └── Register.jsx       # Registration with role & village fields
+│   │   ├── services/
+│   │   │   └── api.js             # Axios instance with JWT interceptor
+│   │   ├── App.jsx                # Main App wrapper
+│   │   └── index.css              # Modern agricultural theme design system
+│   └── package.json
 ├── server/
-│   ├── config/
-│   │   └── db.js              # MongoDB connection logic using Mongoose
+│   ├── config/db.js
+│   ├── controllers/
+│   │   └── authController.js      # Register, Login, GetMe logic
+│   ├── middleware/
+│   │   └── authMiddleware.js      # Protect (JWT) & Authorize (RBAC)
 │   ├── models/
-│   │   ├── User.js            # User schema (farmer/expert/admin accounts)
-│   │   ├── Post.js            # Post schema (feed posts, announcements, likes)
-│   │   └── Comment.js         # Comment schema (post discussions)
-│   ├── .env                   # Local environment variables
-│   ├── .env.example           # Example environment template for team/deployment
-│   ├── package.json           # Backend dependencies and scripts
-│   └── server.js              # Express app setup and entry point
-├── .gitignore                 # Excludes node_modules and .env from Git
-└── PROJECT_JOURNEY.md         # Daily roadmap & comprehensive learning guide
+│   │   ├── User.js                # Pre-save bcrypt hook & JWT generator
+│   │   ├── Post.js
+│   │   └── Comment.js
+│   ├── routes/
+│   │   └── authRoutes.js          # /api/auth router
+│   ├── .env
+│   ├── package.json
+│   └── server.js
+├── .gitignore
+├── PROJECT_JOURNEY.md             # Complete day-by-day documentation
+└── README.md
 ```
 
 ---
 
-## 🗄️ Database Schemas Detail
+## 🎤 Day 2 Interview Questions & Answers
 
-### 1. `User` Model (`server/models/User.js`)
-* **`name`**: String, required, trimmed.
-* **`email`**: String, required, unique, validated with regex.
-* **`password`**: String, required (hidden from queries by default with `select: false`).
-* **`role`**: Enum (`'farmer'`, `'expert'`, `'admin'`), defaults to `'farmer'`.
-* **`village`**, **`district`**, **`state`**: Location information for localized agricultural context.
-* **`profilePic`**: Image URL for user avatar.
-* **`preferredLanguage`**: Enum (`'en'`, `'kn'`) for English / Kannada interface.
-* **`isBlocked`**: Boolean flag for admin user moderation.
-* **`timestamps`**: Automatically tracks `createdAt` and `updatedAt`.
+#### **Q1: How does JWT authentication work and why is it stateless?**
+> **Answer:** In session-based authentication, the server stores session IDs in memory or Redis. With JWT, the server signs the user data with a secret key into a token and sends it to the client. The client sends this token in the `Authorization: Bearer <token>` header with subsequent requests. The server verifies the cryptographic signature without reading or storing session state in a database, making it stateless and horizontally scalable.
 
-### 2. `Post` Model (`server/models/Post.js`)
-* **`content`**: String, required (up to 2000 characters).
-* **`image`**: Cloudinary / uploaded image URL.
-* **`author`**: Reference to `User` ObjectId.
-* **`isAnnouncement`**: Boolean flag (admin announcements pinned to the top).
-* **`category`**: Farming categories (*Crops, Pest Control, Weather, Market Prices, Govt Schemes, Machinery, General*).
-* **`likes`**: Array of `User` ObjectIds (prevents duplicate likes).
-* **Index**: `{ isAnnouncement: -1, createdAt: -1 }` for high-speed feed sorting.
+#### **Q2: Why do we hash passwords instead of encrypting them?**
+> **Answer:** Encryption is **two-way** (it can be decrypted with a private key). If the encryption key is compromised, all passwords are exposed. Hashing is **one-way** (irreversible). Even database administrators cannot see plaintext passwords. Verification happens by hashing the entered attempt and matching hashes.
 
-### 3. `Comment` Model (`server/models/Comment.js`)
-* **`text`**: String, required (up to 1000 characters).
-* **`author`**: Reference to `User` ObjectId.
-* **`postId`**: Reference to the parent `Post` ObjectId.
-* **Index**: `{ postId: 1, createdAt: 1 }` for fast retrieval of comments per post.
+#### **Q3: What is the purpose of Axios Request Interceptors?**
+> **Answer:** Interceptors allow intercepting outgoing HTTP requests before they are sent. We use it to read `localStorage.getItem('agrichat_token')` and attach the `Authorization` header automatically to all API calls, avoiding repetitive boilerplate code.
 
 ---
 
-## 🎤 Day 1 Interview Questions & Answers
+## 🏃 How to Run Frontend & Backend
 
-#### **Q1: Why choose MongoDB over a relational database like MySQL for AgriChat?**
-> **Answer:** MongoDB is a document-oriented NoSQL database that stores data in JSON/BSON format. For a community platform like AgriChat, posts, nested likes arrays, user preferences, and media metadata can evolve quickly. MongoDB handles polymorphic structures gracefully and pairs natively with JavaScript in the MERN stack.
+### 1. Backend Server:
+```bash
+cd server
+npm run dev
+```
+*(Runs on `http://localhost:5000`)*
 
-#### **Q2: What is Mongoose and why do we use it with Node.js?**
-> **Answer:** Mongoose is an Object Data Modeling (ODM) library for MongoDB and Node.js. While MongoDB is schema-less by nature, Mongoose provides application-level schema enforcement, data validation, type casting, default values, pre/post middleware hooks, and query helpers (e.g. `.populate()`).
-
-#### **Q3: Why did we put `select: false` on the User's password field?**
-> **Answer:** Security best practice. By default, querying user profiles (like displaying author names on posts) will automatically exclude the hashed password from the response payload, reducing the risk of accidental credential leakage.
-
-#### **Q4: Why are database indexes added on `Post` and `Comment` models?**
-> **Answer:** Indexes create efficient lookup structures in MongoDB. For example, indexing `{ isAnnouncement: -1, createdAt: -1 }` on Posts allows MongoDB to return pinned announcements and newest posts instantly without scanning every document in the collection (avoiding full collection scans).
-
----
-
-## 🏃 How to Run Day 1 Backend
-
-1. Navigate to the server folder:
-   ```bash
-   cd server
-   ```
-2. Install dependencies (if not already installed):
-   ```bash
-   npm install
-   ```
-3. Start the development server with live reload:
-   ```bash
-   npm run dev
-   ```
-4. Test the health endpoint:
-   Open browser or Postman at: `http://localhost:5000/api/health`
+### 2. Frontend React App:
+```bash
+cd client
+npm run dev
+```
+*(Runs on `http://localhost:5173`)*
 
 ---
 
-## 🔮 Next Step (Day 2)
-- **User Authentication (Backend & Frontend):**
-  - Implement bcrypt password hashing.
-  - Generate and verify JSON Web Tokens (JWT).
-  - Create `/api/auth/register`, `/api/auth/login`, and `/api/auth/me` endpoints.
-  - Setup React frontend authentication state & forms.
+## 🔮 Next Step (Day 3)
+- **Profile Management & Forgot Password:**
+  - Setup Multer middleware for profile image uploads & Cloudinary integration.
+  - Profile update API (`name`, `village`, `district`, `profilePic`).
+  - Forgot password & Reset token generation with Nodemailer email link.
