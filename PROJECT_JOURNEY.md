@@ -14,7 +14,7 @@
 - [x] **Day 4: Core Feed & Post CRUD (Backend)** *(Completed)*
 - [x] **Day 5: Core Feed & Post CRUD (Frontend)** *(Completed)*
 - [x] **Day 6: Social Interactions: Likes & Comments** *(Completed)*
-- [ ] **Day 7: Community Directory & Multi-language Support (Kannada & English)**
+- [x] **Day 7: Community Directory & Multi-language Support (Kannada & English)** *(Completed)*
 - [ ] **Day 8: Admin Panel - Dashboard & User Management**
 - [ ] **Day 9: Admin Panel - Moderation & Announcements**
 - [ ] **Day 10: Testing, Documentation & Deployment**
@@ -665,6 +665,141 @@ AgriChat/
 
 ---
 
+---
+
+# 📅 Day 7: Community Directory & Multi-language Support (Kannada & English)
+
+## 🎯 Day 7 Objectives
+1. Build the **Community Directory API** (`GET /api/users`):
+   - Multi-filtering by Role (`farmer`, `expert`, `admin`), Karnataka District, and Name/Village search.
+   - Computes live user contribution counts (posts published) via MongoDB `$group` aggregation pipeline.
+2. Build the **User Public Profile API** (`GET /api/users/:id`):
+   - Returns public farmer/expert bio, village, district, preferred language, and all authored community posts.
+3. Build the modern **Community Directory Page** (`client/src/pages/Directory.jsx`):
+   - Interactive search bar and role tab filters (All, 🌾 Farmers, 🎓 Agri Experts, 🛡️ Admins).
+   - Member cards with avatars, location tags, member-since timestamps, and contribution counts.
+   - Interactive Public Profile modal showcasing all posts authored by that member.
+4. Establish the centralized **Bilingual Localization System** (`client/src/utils/translations.js`):
+   - Comprehensive Kannada (ಕನ್ನಡ) & English dictionary.
+   - Seamless header switcher toggling state across all cards, dialogs, empty states, and notifications.
+
+---
+
+## 🛠️ Technologies Used & Why
+
+| Technology | What It Is | Why It Is Used in AgriChat |
+| :--- | :--- | :--- |
+| **MongoDB Aggregation (`$group`, `$match`)** | Pipeline Data Processing | Computes total posts authored by each farmer across the entire directory in a single performant aggregation query. |
+| **Bilingual Localization Pattern (i18n)** | Client-side Translation Engine | Provides native Kannada language support for rural farmers across Karnataka while maintaining English accessibility for agricultural scientists. |
+| **Public vs Private Data Sanitization** | Security & Privacy Pattern | Explicitly excludes sensitive fields (`password`, `resetPasswordToken`) using Mongoose `.select('-password')` before returning public directory records. |
+| **Modal-Driven Profile Insights** | Interactive React Component | Allows farmers to explore an expert or peer's past advice without leaving their place in the directory. |
+
+---
+
+## 💡 Simple Explanations: Key Concepts
+
+### 1. How Does the Bilingual (Kannada/English) System Work?
+```
+[ User clicks Kannada Switcher button in Navbar ]
+       │
+       ▼
+[ toggleLanguage() sets language = 'kn' & stores in localStorage('agrichat_lang') ]
+       │
+       ▼
+[ Components read active translations dictionary ]
+translations[language].directoryTitle ---> "🌾 ರೈತ ಸಮುದಾಯ ಮತ್ತು ಕೃಷಿ ತಜ್ಞರ ಕೋಶ"
+```
+
+### 2. How are User Post Counts Calculated?
+Instead of adding a risky increment counter to the User document that could go out of sync on post deletion, the server executes:
+```javascript
+const postCounts = await Post.aggregate([
+  { $match: { author: { $in: userIds } } },
+  { $group: { _id: '$author', count: { $sum: 1 } } }
+]);
+```
+This guarantees accurate, real-time contribution numbers at all times.
+
+---
+
+## 🔌 Day 7 API Reference
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/users` | Public | Get community directory with search, role tabs, district filters, and post counts |
+| `GET` | `/api/users/:id` | Public | Get single farmer/expert profile with their authored post feed |
+
+---
+
+## 📂 Updated Repository Structure
+
+```
+AgriChat/
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx             # Added Directory tab button (Day 7)
+│   │   │   ├── PostCard.jsx
+│   │   │   ├── CreatePostModal.jsx
+│   │   │   └── EditPostModal.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── Feed.jsx
+│   │   │   ├── Directory.jsx          # Community Member Directory (Day 7)
+│   │   │   ├── Profile.jsx
+│   │   │   ├── ForgotPassword.jsx
+│   │   │   └── ResetPassword.jsx
+│   │   ├── services/
+│   │   │   └── api.js
+│   │   ├── utils/
+│   │   │   └── translations.js        # Bilingual EN/KN dictionary (Day 7)
+│   │   ├── App.jsx                    # Mounted /directory route (Day 7)
+│   │   └── index.css
+│   └── package.json
+├── server/
+│   ├── config/db.js
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── postController.js
+│   │   ├── commentController.js
+│   │   └── userController.js          # Directory & Public Profiles (Day 7)
+│   ├── middleware/
+│   │   └── authMiddleware.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Post.js
+│   │   └── Comment.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── postRoutes.js
+│   │   ├── commentRoutes.js
+│   │   └── userRoutes.js              # /api/users Router (Day 7)
+│   ├── seeder.js
+│   ├── .env
+│   ├── package.json
+│   └── server.js                      # Mounts /api/users (Day 7)
+├── .gitignore
+├── PROJECT_JOURNEY.md                 # 10-Day Complete Journey
+└── README.md
+```
+
+---
+
+## 🎤 Day 7 Interview Questions & Answers
+
+#### **Q1: Why is multi-language support (Kannada & English) crucial for AgriChat?**
+> **Answer:** In regional agricultural applications, the majority of primary users (farmers) are most comfortable communicating in their native regional language (Kannada). Agricultural researchers, extension officers, and administrators often communicate in English. Supporting both languages with instant switching ensures that vital agricultural advice and weather advisories are accessible to all demographics without barriers.
+
+#### **Q2: Why use `select('-password')` when returning user directory results?**
+> **Answer:** Security best practices. Even though passwords in AgriChat are hashed with Bcrypt, sensitive fields (hashes, password reset tokens, expiration dates) should never be transmitted over public network responses. Using `.select('-password -resetPasswordToken -resetPasswordExpire')` strictly limits returned fields to public identifiers (name, role, village, district, avatar, post count).
+
+#### **Q3: How does client-side i18n compare with server-rendered localization?**
+> **Answer:** Client-side i18n loads translations as lightweight JSON key-value dictionaries within the Single Page Application. Language switching happens instantly in browser memory without triggering additional HTTP roundtrips or server page re-renders, offering optimal performance and offline resilience.
+
+---
+
 ## 🏃 How to Run Frontend & Backend
 
 ### 1. Seed Demo Data:
@@ -689,11 +824,12 @@ npm run dev
 
 ---
 
-## 🔮 Next Step (Day 7)
-- **Community Directory & Multi-language Support (Kannada & English):**
-  - Farmer & Expert directory listing (`GET /api/users` with filters by role, district, and crop expertise).
-  - Farmer directory view with search by village/district.
-  - Complete Kannada/English dictionary expansion across all views.
+## 🔮 Next Step (Day 8)
+- **Admin Panel - Dashboard & User Management:**
+  - Admin aggregate statistics API (Total farmers, Total experts, Total posts, Comments count, Active announcements).
+  - Admin User Management API: Block/Unblock suspicious accounts, Role escalation (`farmer` <-> `expert`).
+  - Admin Dashboard frontend view with metric KPI cards and user moderation table.
+
 
 
 

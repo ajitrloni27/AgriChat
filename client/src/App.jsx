@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
+import Directory from './pages/Directory';
 import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -20,6 +21,7 @@ function MainApp() {
       <main style={{ flex: 1 }}>
         {activeTab === 'home' && <Home setActiveTab={setActiveTab} />}
         {activeTab === 'feed' && <Feed setActiveTab={setActiveTab} />}
+        {activeTab === 'directory' && <Directory setActiveTab={setActiveTab} />}
         {activeTab === 'login' && <Login setActiveTab={setActiveTab} />}
         {activeTab === 'register' && <Register setActiveTab={setActiveTab} />}
         {activeTab === 'profile' && <Profile setActiveTab={setActiveTab} />}

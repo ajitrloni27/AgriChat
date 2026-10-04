@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Sprout, LogOut, User as UserIcon, Languages, Shield, Sparkles } from 'lucide-react';
+import { Sprout, LogOut, User as UserIcon, Languages, Users } from 'lucide-react';
 
 const Navbar = ({ activeTab, setActiveTab }) => {
   const { user, isAuthenticated, logout, language, toggleLanguage } = useAuth();
@@ -19,6 +19,26 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 
         {/* Navigation Actions */}
         <div className="nav-actions">
+          {/* Feed Button */}
+          <button
+            className={`btn ${activeTab === 'feed' ? 'btn-primary' : 'btn-outline'}`}
+            style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
+            onClick={() => setActiveTab('feed')}
+          >
+            <Sprout size={16} />
+            <span>{language === 'kn' ? 'ಕೃಷಿ ಫೀಡ್' : 'Feed'}</span>
+          </button>
+
+          {/* Directory Button */}
+          <button
+            className={`btn ${activeTab === 'directory' ? 'btn-primary' : 'btn-outline'}`}
+            style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
+            onClick={() => setActiveTab('directory')}
+          >
+            <Users size={16} />
+            <span>{language === 'kn' ? 'ಸಮುದಾಯ' : 'Directory'}</span>
+          </button>
+
           {/* Language Switcher */}
           <button
             className="btn btn-outline"
@@ -59,16 +79,6 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                   </span>
                 </div>
               </div>
-
-              {/* Feed Button */}
-              <button
-                className={`btn ${activeTab === 'feed' ? 'btn-primary' : 'btn-outline'}`}
-                style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
-                onClick={() => setActiveTab('feed')}
-              >
-                <Sprout size={16} />
-                <span>{language === 'kn' ? 'ಕೃಷಿ ಫೀಡ್' : 'Community Feed'}</span>
-              </button>
 
               {/* Profile Button */}
               <button
@@ -114,3 +124,4 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 };
 
 export default Navbar;
+
