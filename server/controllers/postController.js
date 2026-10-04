@@ -342,3 +342,48 @@ exports.getUserPosts = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc    Toggle Like / Unlike on a post
+ * @route   PUT /api/posts/:id/like
+ * @access  Private
+ */
+exports.toggleLikePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        error: 'Post not found',
+      });
+    }
+
+    const isLiked = post.likes.some((userId) => userId.toString() === req.user.id);
+
+    if (isLiked) {
+      // Unlike: Remove user id from likes array
+      post.likes = post.likes.filter((userId) => userId.toString() !== req.user.id);
+    } else {
+      // Like: Push user id to likes array
+      post.likes.push(req.user.id);
+    }
+
+    await post.save();
+
+    res.status(200).json({
+      success: true,
+      message: isLiked ? 'Post unliked' : 'Post liked!',
+      isLiked: !isLiked,
+      likesCount: post.likes.length,
+      likes: post.likes,
+    });
+  } catch (error) {
+    console.error('Toggle Like Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Server error toggling like',
+    });
+  }
+};
+

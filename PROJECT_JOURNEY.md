@@ -13,7 +13,7 @@
 - [x] **Day 3: Profile Management & Forgot Password** *(Completed)*
 - [x] **Day 4: Core Feed & Post CRUD (Backend)** *(Completed)*
 - [x] **Day 5: Core Feed & Post CRUD (Frontend)** *(Completed)*
-- [ ] **Day 6: Social Interactions: Likes & Comments**
+- [x] **Day 6: Social Interactions: Likes & Comments** *(Completed)*
 - [ ] **Day 7: Community Directory & Multi-language Support (Kannada & English)**
 - [ ] **Day 8: Admin Panel - Dashboard & User Management**
 - [ ] **Day 9: Admin Panel - Moderation & Announcements**
@@ -538,6 +538,133 @@ AgriChat/
 
 ---
 
+---
+
+# 📅 Day 6: Social Interactions: Likes & Comments
+
+## 🎯 Day 6 Objectives
+1. Build the **Like/Unlike Toggle API** (`PUT /api/posts/:id/like`):
+   - Authenticated user likes are stored atomically as an array of ObjectIds in `post.likes`.
+   - Idempotent toggling (adding user ID if not present, removing if already liked) returning live counts and boolean state.
+2. Build the **Comment REST Endpoints**:
+   - `POST /api/posts/:postId/comments`: Authenticated comment authoring linked to the target post, returning populated author details.
+   - `GET /api/posts/:postId/comments`: Fetches chronological conversation replies populated with author name, role, location, and avatar.
+   - `DELETE /api/comments/:id`: Role-restricted comment deletion (authorized for Comment author, Post owner, or Admin).
+3. Build the **Interactive Social UI** inside `client/src/components/PostCard.jsx`:
+   - Instant optimistic like toggle with CSS heart pop animation and red fill state.
+   - Expandable real-time inline comments drawer.
+   - Quick comment composer with immediate optimistic feed state updates.
+   - Delete comment buttons with confirmation dialogues.
+4. Support bilingual (English & Kannada) translations across like buttons, comment drawers, and empty states.
+
+---
+
+## 🛠️ Technologies Used & Why
+
+| Technology | What It Is | Why It Is Used in AgriChat |
+| :--- | :--- | :--- |
+| **Atomic Array Filtering (`.filter()`, `.some()`)** | In-memory / MongoDB Array Logic | Toggles user IDs in the `post.likes` array reliably without duplicate entries. |
+| **Express Nested Sub-Routers (`mergeParams: true`)** | Express Router Pattern | Routes `/api/posts/:postId/comments` cleanly into `commentRoutes.js` while keeping code modular. |
+| **Optimistic Heart Animations (`@keyframes heartBeat`)** | Micro-interaction CSS | Delivers instantaneous visual feedback when a farmer likes a post before the HTTP request roundtrip finishes. |
+| **Hierarchical Access Control** | Authorization Layer | Allows both the comment creator AND the original post owner/admin to moderate and delete inappropriate replies. |
+
+---
+
+## 💡 Simple Explanations: Key Concepts
+
+### 1. How Does the Like / Unlike Toggle Work?
+```
+Incoming Request: PUT /api/posts/:id/like (User: u1)
+       │
+       ▼
+Is 'u1' in post.likes?
+  ├── YES: post.likes = post.likes.filter(id !== 'u1')  ---> Status: Unliked (Count - 1)
+  └── NO:  post.likes.push('u1')                        ---> Status: Liked (Count + 1)
+       │
+       ▼
+await post.save() ---> Returns { success: true, isLiked: true/false, likesCount }
+```
+
+### 2. What is `mergeParams: true` in Express?
+By default, Express router parameters (like `:postId` in `router.use('/:postId/comments', commentRouter)`) are inaccessible inside the child router. Setting `{ mergeParams: true }` instructs the child router to inherit parameters from the parent router, allowing `req.params.postId` to be read seamlessly in `commentController.js`.
+
+---
+
+## 🔌 Day 6 API Reference
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `PUT` | `/api/posts/:id/like` | Private (JWT) | Toggle like/unlike for authenticated farmer |
+| `POST` | `/api/posts/:postId/comments` | Private (JWT) | Add a comment/advice reply to a post |
+| `GET` | `/api/posts/:postId/comments` | Public | Get all comments for a post in chronological order |
+| `DELETE` | `/api/comments/:id` | Private (Author / Post Owner / Admin) | Delete a specific comment |
+
+---
+
+## 📂 Updated Repository Structure
+
+```
+AgriChat/
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── PostCard.jsx           # Enhanced with Likes & Comments drawer (Day 6)
+│   │   │   ├── CreatePostModal.jsx
+│   │   │   └── EditPostModal.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── Feed.jsx
+│   │   │   ├── Profile.jsx
+│   │   │   ├── ForgotPassword.jsx
+│   │   │   └── ResetPassword.jsx
+│   │   ├── services/
+│   │   │   └── api.js
+│   │   ├── App.jsx
+│   │   └── index.css                  # Comments & Heart animations (Day 6)
+│   └── package.json
+├── server/
+│   ├── config/db.js
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── postController.js          # Enhanced with toggleLikePost (Day 6)
+│   │   └── commentController.js       # Comment CRUD (Day 6)
+│   ├── middleware/
+│   │   └── authMiddleware.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Post.js
+│   │   └── Comment.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── postRoutes.js              # Nested comments router (Day 6)
+│   │   └── commentRoutes.js           # Comment endpoints (Day 6)
+│   ├── seeder.js
+│   ├── .env
+│   ├── package.json
+│   └── server.js                      # Mounts /api/comments (Day 6)
+├── .gitignore
+├── PROJECT_JOURNEY.md                 # 10-Day Complete Journey
+└── README.md
+```
+
+---
+
+## 🎤 Day 6 Interview Questions & Answers
+
+#### **Q1: Why are likes stored as an array of User IDs rather than a simple counter integer?**
+> **Answer:** If we only stored an integer `likesCount: 15`, we would not know **which** specific users liked the post. Storing an array of User ObjectIds (`likes: [ObjectId("u1"), ObjectId("u2")]`) allows the server to verify whether the requesting user has already liked the post, prevent duplicate likes from the same user, and compute the total count via `likes.length`.
+
+#### **Q2: Why allow post authors to delete comments written by other users on their posts?**
+> **Answer:** Content moderation and spam prevention. On community platforms, farmers and experts who author original posts need the authority to moderate discussions and remove abusive or misleading agricultural advice posted under their threads.
+
+#### **Q3: What are Optimistic UI Updates and why are they important for social actions?**
+> **Answer:** Optimistic UI updates change the interface immediately on user interaction (e.g. turning the heart red and bumping the count from 4 to 5) before receiving the backend HTTP response. If the network request subsequently fails, the state is rolled back. This creates a zero-latency, snappy user experience.
+
+---
+
 ## 🏃 How to Run Frontend & Backend
 
 ### 1. Seed Demo Data:
@@ -562,12 +689,12 @@ npm run dev
 
 ---
 
-## 🔮 Next Step (Day 6)
-- **Social Interactions: Likes & Comments:**
-  - Like/Unlike toggle API (`PUT /api/posts/:id/like`).
-  - Comment CRUD APIs (`POST /api/posts/:id/comments`, `GET /api/posts/:id/comments`, `DELETE /api/comments/:id`).
-  - Real-time comment drawer / accordion on post cards.
-  - Interactive like animations and heart counters.
+## 🔮 Next Step (Day 7)
+- **Community Directory & Multi-language Support (Kannada & English):**
+  - Farmer & Expert directory listing (`GET /api/users` with filters by role, district, and crop expertise).
+  - Farmer directory view with search by village/district.
+  - Complete Kannada/English dictionary expansion across all views.
+
 
 
 
