@@ -280,3 +280,208 @@ exports.deleteUserAdmin = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc    Get all posts for content moderation queue
+ * @route   GET /api/admin/posts
+ * @access  Private (Admin Only)
+ */
+exports.getAllPostsAdmin = async (req, res) => {
+  try {
+    const { category, isAnnouncement, search, page = 1, limit = 20 } = req.query;
+
+    const query = {};
+
+    if (category && category !== 'All') {
+      query.category = category;
+    }
+
+    if (isAnnouncement === 'true') {
+      query.isAnnouncement = true;
+    } else if (isAnnouncement === 'false') {
+      query.isAnnouncement = false;
+    }
+
+    if (search && search.trim()) {
+      query.$or = [
+        { title: { $regex: search.trim(), $options: 'i' } },
+        { content: { $regex: search.trim(), $options: 'i' } },
+        { crop: { $regex: search.trim(), $options: 'i' } },
+      ];
+    }
+
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const total = await Post.countDocuments(query);
+    const posts = await Post.find(query)
+      .populate('author', 'name email role village district state profilePic')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    // Get comment counts
+    const postIds = posts.map((p) => p._id);
+    const commentsAgg = await Comment.aggregate([
+      { $match: { postId: { $in: postIds } } },
+      { $group: { _id: '$postId', count: { $sum: 1 } } },
+    ]);
+
+    const commentCountMap = {};
+    commentsAgg.forEach((c) => {
+      commentCountMap[c._id.toString()] = c.count;
+    });
+
+    const formattedPosts = posts.map((p) => {
+      const postObj = p.toObject();
+      postObj.commentsCount = commentCountMap[p._id.toString()] || 0;
+      return postObj;
+    });
+
+    res.status(200).json({
+      success: true,
+      count: formattedPosts.length,
+      total,
+      totalPages: Math.ceil(total / limitNum),
+      currentPage: pageNum,
+      posts: formattedPosts,
+    });
+  } catch (error) {
+    console.error('Admin Get Posts Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Server error fetching posts for moderation',
+    });
+  }
+};
+
+/**
+ * @desc    Toggle Pin / Unpin Announcement status of any post
+ * @route   PUT /api/admin/posts/:id/pin
+ * @access  Private (Admin Only)
+ */
+exports.togglePinAnnouncement = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        error: 'Post not found',
+      });
+    }
+
+    post.isAnnouncement = !post.isAnnouncement;
+    await post.save();
+
+    res.status(200).json({
+      success: true,
+      message: post.isAnnouncement
+        ? 'Post has been pinned as an Official Announcement!'
+        : 'Post announcement pin removed.',
+      isAnnouncement: post.isAnnouncement,
+      post,
+    });
+  } catch (error) {
+    console.error('Toggle Pin Announcement Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Server error modifying announcement status',
+    });
+  }
+};
+
+/**
+ * @desc    Broadcast a new official announcement directly from Admin Panel
+ * @route   POST /api/admin/announcements
+ * @access  Private (Admin Only)
+ */
+exports.createAnnouncementAdmin = async (req, res) => {
+  try {
+    const { title, content, crop, category, image, tags } = req.body;
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Announcement content cannot be empty',
+      });
+    }
+
+    let parsedTags = [];
+    if (Array.isArray(tags)) {
+      parsedTags = tags;
+    } else if (typeof tags === 'string' && tags.trim()) {
+      parsedTags = tags.split(',').map((t) => t.trim().replace(/^#/, ''));
+    }
+
+    const post = await Post.create({
+      title: title ? `📢 ${title.trim()}` : '📢 Official Community Announcement',
+      content: content.trim(),
+      crop: crop?.trim() || '',
+      category: category || 'Govt Schemes',
+      image: image || '',
+      tags: parsedTags.length > 0 ? parsedTags : ['OfficialNotice', 'AgriChatAlert'],
+      author: req.user.id,
+      isAnnouncement: true,
+      location: {
+        village: req.user.village || 'Bengaluru',
+        district: req.user.district || 'Karnataka State',
+        state: 'Karnataka',
+      },
+    });
+
+    const populatedPost = await Post.findById(post._id).populate(
+      'author',
+      'name email role village district state profilePic'
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Official announcement broadcasted to all farmers successfully!',
+      post: populatedPost,
+    });
+  } catch (error) {
+    console.error('Create Announcement Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Server error broadcasting announcement',
+    });
+  }
+};
+
+/**
+ * @desc    Admin moderate & delete any inappropriate post
+ * @route   DELETE /api/admin/posts/:id
+ * @access  Private (Admin Only)
+ */
+exports.deletePostAdmin = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        error: 'Post not found',
+      });
+    }
+
+    // Cascade delete comments
+    await Comment.deleteMany({ postId: post._id });
+
+    // Delete post
+    await Post.findByIdAndDelete(post._id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Post and associated comments successfully moderated and deleted.',
+    });
+  } catch (error) {
+    console.error('Admin Delete Post Error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Server error deleting post',
+    });
+  }
+};
+
