@@ -11,7 +11,7 @@
 - [x] **Day 1: Project Setup & Database Design** *(Completed)*
 - [x] **Day 2: User Authentication (Backend & Frontend)** *(Completed)*
 - [x] **Day 3: Profile Management & Forgot Password** *(Completed)*
-- [ ] **Day 4: Core Feed & Post CRUD (Backend)**
+- [x] **Day 4: Core Feed & Post CRUD (Backend)** *(Completed)*
 - [ ] **Day 5: Core Feed & Post CRUD (Frontend)**
 - [ ] **Day 6: Social Interactions: Likes & Comments**
 - [ ] **Day 7: Community Directory & Multi-language Support (Kannada & English)**
@@ -284,16 +284,143 @@ AgriChat/
 
 ---
 
+---
+
+# 📅 Day 4: Core Feed & Post CRUD (Backend)
+
+## 🎯 Day 4 Objectives
+1. Refine the **Post Schema** (`server/models/Post.js`) with title, categories, target crop, hashtags, author ObjectId reference, location metadata, and announcement flags.
+2. Build comprehensive **Post Controllers** (`server/controllers/postController.js`) covering:
+   - `createPost`: Authenticated post authoring with role-based announcement permissions.
+   - `getPosts`: Multi-parameter filtering (Category, Crop, District, Search text regex, Pagination, Sorting by Newest/Popular).
+   - `getPostById`: Single post fetching with author population and nested comment retrieval.
+   - `updatePost`: Author and Admin authorized modifications.
+   - `deletePost`: Cascade deletion of posts and their associated comments.
+   - `getUserPosts`: Author-specific profile timeline queries.
+3. Secure and expose endpoints via Express Router (`server/routes/postRoutes.js`) mounted on `/api/posts`.
+4. Create a comprehensive database **Seeder Script** (`server/seeder.js`) with realistic agricultural posts (MSP announcements, BT cotton pest alerts, expert advice, and weather warnings).
+
+---
+
+## 🛠️ Technologies Used & Why
+
+| Technology | What It Is | Why It Is Used in AgriChat |
+| :--- | :--- | :--- |
+| **Mongoose `populate()`** | Reference Resolution | Joins user details (name, role, village, district, avatar) to post documents seamlessly without manual foreign key queries. |
+| **MongoDB Aggregation Pipeline** | Multi-stage Data Processing (`$group`, `$match`) | Aggregates real-time comment counts across all feed posts in a single, high-performance database query. |
+| **Regex Case-Insensitive Search (`$regex`, `$options: 'i'`)** | Text Pattern Matcher | Enables flexible search over post titles, body content, crop tags, and district locations. |
+| **Cascade Delete Pattern** | Data Integrity Pattern | Ensures that when a post is removed, all associated comments are automatically cleaned up (`Comment.deleteMany`). |
+| **Compound Indexing** | MongoDB Performance Index | Optimizes feed querying ordered by announcement flags (`isAnnouncement: -1`) and creation time (`createdAt: -1`). |
+
+---
+
+## 💡 Simple Explanations: Key Concepts
+
+### 1. How Does Reference Population Work in Mongoose?
+- In MongoDB, a Post document stores only the Author's `_id` (`author: ObjectId("650a...")`).
+- Calling `.populate('author', 'name role village district profilePic')` tells Mongoose to automatically look up the corresponding record in the `users` collection and replace the ID with the selected user fields before returning the response.
+
+```
+Post Document in DB:
+{ _id: "p1", title: "Pest Attack", author: ObjectId("u1") }
+
+After .populate('author', 'name role'):
+{ _id: "p1", title: "Pest Attack", author: { name: "Basavaraj", role: "farmer" } }
+```
+
+### 2. How Does Feed Pagination Work?
+- `page`: The current page requested (e.g. Page 2).
+- `limit`: Number of posts per page (e.g. 10).
+- `skip`: Calculated as `(page - 1) * limit` (e.g. `(2 - 1) * 10 = 10` posts skipped).
+
+---
+
+## 🔌 Day 4 API Reference
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/posts` | Private (JWT) | Create a new community post / announcement |
+| `GET` | `/api/posts` | Public | Get paginated feed with search, category, and crop filters |
+| `GET` | `/api/posts/:id` | Public | Get single post details with populated author & comments |
+| `PUT` | `/api/posts/:id` | Private (Author / Admin) | Update title, content, crop, category, or tags |
+| `DELETE` | `/api/posts/:id` | Private (Author / Admin) | Delete post and cascade delete its comments |
+| `GET` | `/api/posts/user/:userId` | Public | Get all posts authored by a specific user |
+
+---
+
+## 📂 Updated Repository Structure
+
+```
+AgriChat/
+├── client/
+│   ├── src/
+│   │   ├── components/Navbar.jsx
+│   │   ├── context/AuthContext.jsx
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── Register.jsx
+│   │   │   ├── Profile.jsx
+│   │   │   ├── ForgotPassword.jsx
+│   │   │   └── ResetPassword.jsx
+│   │   ├── services/api.js
+│   │   ├── App.jsx
+│   │   └── index.css
+│   └── package.json
+├── server/
+│   ├── config/db.js
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   └── postController.js        # Post CRUD, filters, pagination (Day 4)
+│   ├── middleware/
+│   │   └── authMiddleware.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Post.js                  # Enhanced Post schema with virtuals (Day 4)
+│   │   └── Comment.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   └── postRoutes.js            # /api/posts REST router (Day 4)
+│   ├── seeder.js                    # Database demo seeder (Day 4)
+│   ├── .env
+│   ├── package.json
+│   └── server.js                    # Mounts /api/posts router (Day 4)
+├── .gitignore
+├── PROJECT_JOURNEY.md               # 10-Day Complete Guide
+└── README.md
+```
+
+---
+
+## 🎤 Day 4 Interview Questions & Answers
+
+#### **Q1: What is the N+1 query problem and how does Mongoose `populate` handle it?**
+> **Answer:** The N+1 problem occurs when querying a list of $N$ posts and then firing $N$ individual database queries to fetch the author for each post. Mongoose solves this by collecting all distinct `author` IDs from the retrieved posts and issuing a single batch query (`User.find({ _id: { $in: authorIds } })`), joining the results in application memory efficiently.
+
+#### **Q2: Why should we use MongoDB Compound Indexes for the post feed?**
+> **Answer:** AgriChat sorts posts by pinned announcements first and then by newest creation date (`{ isAnnouncement: -1, createdAt: -1 }`). A compound index on these two fields allows the database engine to locate and return the sorted documents directly from the B-Tree index without performing an in-memory collection sort, drastically reducing response times at scale.
+
+#### **Q3: How do we enforce Role-Based Access Control (RBAC) when modifying or deleting posts?**
+> **Answer:** Before executing `post.save()` or `Post.findByIdAndDelete()`, the controller inspects `post.author.toString() === req.user.id || req.user.role === 'admin'`. If neither condition is met, it halts execution and returns an HTTP `403 Forbidden` status.
+
+---
+
 ## 🏃 How to Run Frontend & Backend
 
-### 1. Backend Server:
+### 1. Seed Demo Data (Optional):
+```bash
+cd server
+npm run data:seed
+```
+
+### 2. Backend Server:
 ```bash
 cd server
 npm run dev
 ```
 *(Runs on `http://localhost:5000`)*
 
-### 2. Frontend React App:
+### 3. Frontend React App:
 ```bash
 cd client
 npm run dev
@@ -302,9 +429,11 @@ npm run dev
 
 ---
 
-## 🔮 Next Step (Day 4)
-- **Core Feed & Post CRUD (Backend):**
-  - Post Schema refinement (categories: Pest Control, Market Prices, Weather, Crop Advice).
-  - Post Controllers: Create Post, Get All Posts (with category/location filters & pagination), Get Single Post, Update Post, Delete Post.
-  - Image attachment handling and author population.
+## 🔮 Next Step (Day 5)
+- **Core Feed & Post CRUD (Frontend):**
+  - Create Post modal/box (category dropdown, crop tag input, image upload preview).
+  - Feed view with dynamic category filters (Crops, Pest Control, Weather, Market Prices, Schemes).
+  - Farmer post cards with author badges, location tags, and post edit/delete actions.
+  - Search bar and sorting controls (Newest / Most Popular).
+
 
