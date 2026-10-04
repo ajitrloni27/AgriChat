@@ -4,9 +4,13 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
+import Profile from './pages/Profile';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function MainApp() {
   const [activeTab, setActiveTab] = useState('home');
+  const [resetToken, setResetToken] = useState('');
   const { isAuthenticated } = useAuth();
 
   return (
@@ -17,6 +21,13 @@ function MainApp() {
         {activeTab === 'feed' && <Home setActiveTab={setActiveTab} />}
         {activeTab === 'login' && <Login setActiveTab={setActiveTab} />}
         {activeTab === 'register' && <Register setActiveTab={setActiveTab} />}
+        {activeTab === 'profile' && <Profile setActiveTab={setActiveTab} />}
+        {activeTab === 'forgot-password' && (
+          <ForgotPassword setActiveTab={setActiveTab} setResetToken={setResetToken} />
+        )}
+        {activeTab === 'reset-password' && (
+          <ResetPassword setActiveTab={setActiveTab} resetToken={resetToken} />
+        )}
       </main>
       <footer
         style={{
@@ -43,3 +54,4 @@ function App() {
 }
 
 export default App;
+

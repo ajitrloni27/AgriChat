@@ -10,7 +10,7 @@
 
 - [x] **Day 1: Project Setup & Database Design** *(Completed)*
 - [x] **Day 2: User Authentication (Backend & Frontend)** *(Completed)*
-- [ ] **Day 3: Profile Management & Forgot Password**
+- [x] **Day 3: Profile Management & Forgot Password** *(Completed)*
 - [ ] **Day 4: Core Feed & Post CRUD (Backend)**
 - [ ] **Day 5: Core Feed & Post CRUD (Frontend)**
 - [ ] **Day 6: Social Interactions: Likes & Comments**
@@ -168,6 +168,122 @@ AgriChat/
 
 ---
 
+---
+
+# 📅 Day 3: Profile Management & Forgot Password
+
+## 🎯 Day 3 Objectives
+1. Implement **User Profile Update API** (`PUT /api/auth/profile`) for modifying personal details (Name, Village, District, State, Language, Avatar).
+2. Implement **Password Update API** (`PUT /api/auth/updatepassword`) for authenticated users with current password verification.
+3. Implement **Forgot Password & Reset Token Flow** using Node.js built-in `crypto`:
+   - Generate secure random hex reset token (`crypto.randomBytes(20).toString('hex')`).
+   - Store one-way SHA-256 hash in MongoDB alongside a 15-minute expiration timestamp.
+   - Implement `POST /api/auth/forgotpassword` and `PUT /api/auth/resetpassword/:resettoken`.
+4. Build the modern **Profile Management View** (`Profile.jsx`) featuring personal details editing, avatar selection grid, security settings, and bilingual (English/Kannada) interface.
+5. Build the **Forgot Password** (`ForgotPassword.jsx`) & **Reset Password** (`ResetPassword.jsx`) views with token copying and instant reset workflows.
+
+---
+
+## 🛠️ Technologies Used & Why
+
+| Technology | What It Is | Why It Is Used in AgriChat |
+| :--- | :--- | :--- |
+| **Node.js `crypto`** | Built-in Cryptography Module | Generates cryptographically strong random reset tokens and SHA-256 hashes without external overhead. |
+| **Bcryptjs (Salting)** | Password Hashing Library | Re-hashes newly chosen passwords with 10 salt rounds before saving to MongoDB. |
+| **Mongoose `$gt` Query** | MongoDB Query Operator | Verifies that `resetPasswordExpire` is strictly greater than `Date.now()`, ensuring expired tokens are rejected. |
+| **Lucide Icons** | Vector Icon Set | Provides intuitive visual cues (keys, locks, avatars, locations) for farmers across all literacy levels. |
+| **Bilingual State Management** | React Context API | Seamlessly toggles form labels and validation messages between English and Kannada. |
+
+---
+
+## 💡 Simple Explanations: Key Concepts
+
+### 1. How Does the Secure Password Reset Workflow Work?
+```
+1. [ User enters email ] ---> POST /api/auth/forgotpassword
+2. [ Server generates random 20-byte token ] ---> e.g. "9a7f3c1b..."
+3. [ Server hashes token using SHA-256 ] ---> e.g. "d8e21a..."
+4. [ Server saves hashed token & expiry (now + 15m) in MongoDB User document ]
+5. [ Server returns token / sends email link to User ]
+6. [ User submits new password + token ] ---> PUT /api/auth/resetpassword/:token
+7. [ Server hashes incoming token with SHA-256 and finds user where token matches & expiry > now ]
+8. [ Server hashes new password via bcrypt, clears reset fields, returns new JWT ]
+```
+
+### 2. Why Hash the Reset Token in the Database?
+- If the database is compromised, an attacker who obtains plaintext reset tokens could immediately reset any user's password.
+- Storing only the SHA-256 hash in the database ensures that only the recipient holding the original token in their email/session can successfully reset their account.
+
+---
+
+## 🔌 Day 3 API Reference
+
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `PUT` | `/api/auth/profile` | Private (JWT) | Update farmer/user profile (name, village, district, state, preferredLanguage, profilePic) |
+| `PUT` | `/api/auth/updatepassword` | Private (JWT) | Update account password after verifying `currentPassword` |
+| `POST` | `/api/auth/forgotpassword` | Public | Request password reset token for registered email |
+| `PUT` | `/api/auth/resetpassword/:resettoken` | Public | Reset account password using unexpired reset token |
+
+---
+
+## 📂 Updated Repository Structure
+
+```
+AgriChat/
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   │   └── Navbar.jsx           # Header with Profile access & Language toggle
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx      # Auth, Profile & Password Reset state
+│   │   ├── pages/
+│   │   │   ├── Home.jsx             # Community Overview
+│   │   │   ├── Login.jsx            # Sign In with "Forgot Password" link
+│   │   │   ├── Register.jsx         # Registration view
+│   │   │   ├── Profile.jsx          # Profile Management & Password update (Day 3)
+│   │   │   ├── ForgotPassword.jsx   # Reset token generation view (Day 3)
+│   │   │   └── ResetPassword.jsx    # Set new password view (Day 3)
+│   │   ├── services/
+│   │   │   └── api.js               # Axios instance with Bearer interceptors
+│   │   ├── App.jsx                  # Tab-based view router
+│   │   └── index.css                # Agricultural theme with Profile layouts
+│   └── package.json
+├── server/
+│   ├── config/db.js
+│   ├── controllers/
+│   │   └── authController.js        # Register, Login, Profile, Password Reset
+│   ├── middleware/
+│   │   └── authMiddleware.js        # JWT verification
+│   ├── models/
+│   │   ├── User.js                  # User schema with reset token generator
+│   │   ├── Post.js
+│   │   └── Comment.js
+│   ├── routes/
+│   │   └── authRoutes.js            # Auth & Profile endpoints
+│   ├── .env
+│   ├── package.json
+│   └── server.js
+├── .gitignore
+├── PROJECT_JOURNEY.md               # 10-Day Documentation
+└── README.md
+```
+
+---
+
+## 🎤 Day 3 Interview Questions & Answers
+
+#### **Q1: Why should password reset tokens have an expiration time?**
+> **Answer:** If a reset token never expires, an intercepted email or leaked URL could be used months later to compromise the account. A short expiration window (e.g. 15 minutes) limits the attack surface significantly and ensures that the request is only actionable while the user is actively at their computer or phone.
+
+#### **Q2: Why do we use `crypto.randomBytes()` instead of `Math.random()` for reset tokens?**
+> **Answer:** `Math.random()` is a pseudo-random number generator (PRNG) that is predictable and not cryptographically secure. `crypto.randomBytes()` utilizes operating system entropy (hardware noise, system interrupts) to generate truly unpredictable cryptographically secure pseudo-random numbers (CSPRNG), preventing attackers from guessing valid reset tokens.
+
+#### **Q3: How does `findByIdAndUpdate` differ from `user.save()` in Mongoose?**
+> **Answer:** `findByIdAndUpdate` sends a direct update command to MongoDB, bypassing Mongoose document lifecycle middleware (such as `pre('save')` hooks) unless explicitly configured. `user.save()` executes on a Mongoose document instance and runs all schema validation and `pre('save')` hooks (e.g., automatic bcrypt hashing for modified passwords).
+
+---
+
 ## 🏃 How to Run Frontend & Backend
 
 ### 1. Backend Server:
@@ -186,8 +302,9 @@ npm run dev
 
 ---
 
-## 🔮 Next Step (Day 3)
-- **Profile Management & Forgot Password:**
-  - Setup Multer middleware for profile image uploads & Cloudinary integration.
-  - Profile update API (`name`, `village`, `district`, `profilePic`).
-  - Forgot password & Reset token generation with Nodemailer email link.
+## 🔮 Next Step (Day 4)
+- **Core Feed & Post CRUD (Backend):**
+  - Post Schema refinement (categories: Pest Control, Market Prices, Weather, Crop Advice).
+  - Post Controllers: Create Post, Get All Posts (with category/location filters & pagination), Get Single Post, Update Post, Delete Post.
+  - Image attachment handling and author population.
+

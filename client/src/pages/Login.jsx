@@ -72,7 +72,23 @@ const Login = ({ setActiveTab }) => {
           </div>
 
           <div className="form-group">
-            <label className="form-label">{isKannada ? 'ಪಾಸ್‌ವರ್ಡ್' : 'Password'}</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>
+                {isKannada ? 'ಪಾಸ್‌ವರ್ಡ್' : 'Password'}
+              </label>
+              <span
+                onClick={() => setActiveTab('forgot-password')}
+                style={{
+                  fontSize: '0.8rem',
+                  color: 'var(--primary)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  textDecoration: 'underline',
+                }}
+              >
+                {isKannada ? 'ಪಾಸ್ವರ್ಡ್ ಮರೆತಿರುವಿರಾ?' : 'Forgot Password?'}
+              </span>
+            </div>
             <input
               type="password"
               name="password"

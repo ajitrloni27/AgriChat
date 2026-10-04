@@ -32,10 +32,25 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 
           {isAuthenticated ? (
             <>
-              {/* User Profile Badge */}
-              <div className="user-badge">
+              {/* User Profile Badge / Tab */}
+              <div
+                className="user-badge"
+                onClick={() => setActiveTab('profile')}
+                style={{
+                  cursor: 'pointer',
+                  borderColor: activeTab === 'profile' ? 'var(--primary)' : 'var(--border)',
+                  background: activeTab === 'profile' ? 'var(--primary-light)' : '#f1f5f9',
+                }}
+                title={language === 'kn' ? 'ಪ್ರೊಫೈಲ್ ವೀಕ್ಷಿಸಿ / ಬದಲಾಯಿಸಿ' : 'View / Edit Profile'}
+              >
                 <div className="avatar">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  {user?.profilePic && user.profilePic.length <= 4 ? (
+                    user.profilePic
+                  ) : user?.name ? (
+                    user.name.charAt(0).toUpperCase()
+                  ) : (
+                    'U'
+                  )}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{user?.name}</span>
@@ -44,6 +59,16 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                   </span>
                 </div>
               </div>
+
+              {/* Profile Button */}
+              <button
+                className={`btn ${activeTab === 'profile' ? 'btn-primary' : 'btn-outline'}`}
+                style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
+                onClick={() => setActiveTab('profile')}
+              >
+                <UserIcon size={16} />
+                <span>{language === 'kn' ? 'ಪ್ರೊಫೈಲ್' : 'Profile'}</span>
+              </button>
 
               {/* Logout Button */}
               <button

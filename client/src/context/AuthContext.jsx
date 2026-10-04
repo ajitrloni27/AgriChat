@@ -75,11 +75,78 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // Switch Language
-  const toggleLanguage = () => {
-    const newLang = language === 'en' ? 'kn' : 'en';
-    setLanguage(newLang);
-    localStorage.setItem('agrichat_lang', newLang);
+  // Update Profile function
+  const updateProfile = async (profileData) => {
+    try {
+      const res = await API.put('/auth/profile', profileData);
+      if (res.data.success) {
+        setUser(res.data.user);
+        if (profileData.preferredLanguage) {
+          setLanguage(profileData.preferredLanguage);
+          localStorage.setItem('agrichat_lang', profileData.preferredLanguage);
+        }
+        return { success: true, message: res.data.message };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to update profile',
+      };
+    }
+  };
+
+  // Update / Change Password function
+  const updatePassword = async (currentPassword, newPassword) => {
+    try {
+      const res = await API.put('/auth/updatepassword', { currentPassword, newPassword });
+      if (res.data.success) {
+        localStorage.setItem('agrichat_token', res.data.token);
+        setToken(res.data.token);
+        setUser(res.data.user);
+        return { success: true, message: res.data.message };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to change password',
+      };
+    }
+  };
+
+  // Forgot Password function
+  const forgotPassword = async (email) => {
+    try {
+      const res = await API.post('/auth/forgotpassword', { email });
+      return {
+        success: true,
+        message: res.data.message,
+        resetToken: res.data.resetToken,
+        resetUrl: res.data.resetUrl,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to generate reset request',
+      };
+    }
+  };
+
+  // Reset Password function
+  const resetPassword = async (resetToken, newPassword) => {
+    try {
+      const res = await API.put(`/auth/resetpassword/${resetToken}`, { password: newPassword });
+      if (res.data.success) {
+        localStorage.setItem('agrichat_token', res.data.token);
+        setToken(res.data.token);
+        setUser(res.data.user);
+        return { success: true, message: res.data.message };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to reset password',
+      };
+    }
   };
 
   return (
@@ -93,6 +160,10 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateProfile,
+        updatePassword,
+        forgotPassword,
+        resetPassword,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         isExpert: user?.role === 'expert',
