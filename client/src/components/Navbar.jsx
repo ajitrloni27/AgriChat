@@ -80,6 +80,24 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                 </div>
               </div>
 
+              {/* Admin Panel Button (Admin Only) */}
+              {user?.role === 'admin' && (
+                <button
+                  className={`btn ${activeTab === 'admin' ? 'btn-primary' : 'btn-outline'}`}
+                  style={{
+                    padding: '0.45rem 0.85rem',
+                    fontSize: '0.85rem',
+                    background: activeTab === 'admin' ? '#92400e' : '#fef3c7',
+                    color: activeTab === 'admin' ? '#ffffff' : '#92400e',
+                    borderColor: '#fde68a',
+                  }}
+                  onClick={() => setActiveTab('admin')}
+                >
+                  <Shield size={16} />
+                  <span>{language === 'kn' ? 'ಅಡ್ಮಿನ್ ಪ್ಯಾನಲ್' : 'Admin Panel'}</span>
+                </button>
+              )}
+
               {/* Profile Button */}
               <button
                 className={`btn ${activeTab === 'profile' ? 'btn-primary' : 'btn-outline'}`}

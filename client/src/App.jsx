@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
 import Directory from './pages/Directory';
+import AdminDashboard from './pages/AdminDashboard';
 import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -22,6 +23,7 @@ function MainApp() {
         {activeTab === 'home' && <Home setActiveTab={setActiveTab} />}
         {activeTab === 'feed' && <Feed setActiveTab={setActiveTab} />}
         {activeTab === 'directory' && <Directory setActiveTab={setActiveTab} />}
+        {activeTab === 'admin' && <AdminDashboard setActiveTab={setActiveTab} />}
         {activeTab === 'login' && <Login setActiveTab={setActiveTab} />}
         {activeTab === 'register' && <Register setActiveTab={setActiveTab} />}
         {activeTab === 'profile' && <Profile setActiveTab={setActiveTab} />}
