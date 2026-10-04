@@ -60,6 +60,16 @@ const Navbar = ({ activeTab, setActiveTab }) => {
                 </div>
               </div>
 
+              {/* Feed Button */}
+              <button
+                className={`btn ${activeTab === 'feed' ? 'btn-primary' : 'btn-outline'}`}
+                style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
+                onClick={() => setActiveTab('feed')}
+              >
+                <Sprout size={16} />
+                <span>{language === 'kn' ? 'ಕೃಷಿ ಫೀಡ್' : 'Community Feed'}</span>
+              </button>
+
               {/* Profile Button */}
               <button
                 className={`btn ${activeTab === 'profile' ? 'btn-primary' : 'btn-outline'}`}

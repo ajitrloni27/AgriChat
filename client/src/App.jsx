@@ -4,12 +4,13 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
+import Feed from './pages/Feed';
 import Profile from './pages/Profile';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
 function MainApp() {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState('feed');
   const [resetToken, setResetToken] = useState('');
   const { isAuthenticated } = useAuth();
 
@@ -18,7 +19,7 @@ function MainApp() {
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main style={{ flex: 1 }}>
         {activeTab === 'home' && <Home setActiveTab={setActiveTab} />}
-        {activeTab === 'feed' && <Home setActiveTab={setActiveTab} />}
+        {activeTab === 'feed' && <Feed setActiveTab={setActiveTab} />}
         {activeTab === 'login' && <Login setActiveTab={setActiveTab} />}
         {activeTab === 'register' && <Register setActiveTab={setActiveTab} />}
         {activeTab === 'profile' && <Profile setActiveTab={setActiveTab} />}

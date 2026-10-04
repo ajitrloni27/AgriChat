@@ -12,7 +12,7 @@
 - [x] **Day 2: User Authentication (Backend & Frontend)** *(Completed)*
 - [x] **Day 3: Profile Management & Forgot Password** *(Completed)*
 - [x] **Day 4: Core Feed & Post CRUD (Backend)** *(Completed)*
-- [ ] **Day 5: Core Feed & Post CRUD (Frontend)**
+- [x] **Day 5: Core Feed & Post CRUD (Frontend)** *(Completed)*
 - [ ] **Day 6: Social Interactions: Likes & Comments**
 - [ ] **Day 7: Community Directory & Multi-language Support (Kannada & English)**
 - [ ] **Day 8: Admin Panel - Dashboard & User Management**
@@ -405,9 +405,142 @@ AgriChat/
 
 ---
 
+---
+
+# 📅 Day 5: Core Feed & Post CRUD (Frontend)
+
+## 🎯 Day 5 Objectives
+1. Build the modern **Farmer Community Feed View** (`client/src/pages/Feed.jsx`):
+   - Dynamic category filter pill navigation (All, Crops, Pest Control, Weather, Market Prices, Govt Schemes, Machinery, General).
+   - Real-time search bar (text pattern match across titles, body, crops, and tags) and sorting controls (Newest, Most Liked, Oldest).
+   - District-specific Karnataka agricultural location filter.
+   - Sidebar widgets with live Mandi & MSP commodity prices and regional weather forecast alerts.
+2. Build the **Post Creation Modal & Composer** (`client/src/components/CreatePostModal.jsx`):
+   - Fast crop suggestion pills (Cotton, Paddy, Arecanut, Maize, Sugarcane, Tomato, Chilli, Wheat).
+   - Farm image attachment support with quick presets.
+   - Tag token input and official pinned announcement toggle for Admins & Experts.
+3. Build the **Post Card Component** (`client/src/components/PostCard.jsx`):
+   - Displays author badge, role tag (`🌾 Farmer`, `🎓 Expert`, `🛡️ Admin`), location, pinned announcement banner, category/crop pills, media preview, tags, and timestamps.
+   - Owner-restricted Edit and Delete context menu.
+   - Shareable direct post link clipboard copy helper.
+4. Build the **Post Edit Modal** (`client/src/components/EditPostModal.jsx`) allowing real-time post modifications.
+5. Provide bilingual (English & Kannada) translation across all feed controls, prompts, and modal dialogues.
+
+---
+
+## 🛠️ Technologies Used & Why
+
+| Technology | What It Is | Why It Is Used in AgriChat |
+| :--- | :--- | :--- |
+| **React State & `useCallback`** | Component Hook Architecture | Memoizes API fetchers to avoid unnecessary re-renders when filtering by categories, districts, or query strings. |
+| **Axios API Service Client** | HTTP Interceptor Client | Seamlessly communicates with backend CRUD endpoints (`/api/posts`), injecting JWT tokens on write operations. |
+| **Optimistic / Local State Updates** | UI Responsiveness Pattern | Immediately reflects post creations, edits, and deletions in the React feed state without requiring a full page reload. |
+| **Responsive Grid & Flex Layouts** | Vanilla CSS Grid & Flexbox | Delivers a clean desktop layout with sidebar widgets and a streamlined single-column feed on mobile devices. |
+| **Clipboard API (`navigator.clipboard`)** | Web API | Enables one-click link sharing of community discussions to WhatsApp and local farmer groups. |
+
+---
+
+## 💡 Simple Explanations: Key Concepts
+
+### 1. How Does the Feed Data Flow Work in React?
+```
+[ User selects Category / District / Searches ]
+       │
+       ▼
+[ useEffect triggers fetchPosts() ] ---> GET /api/posts?category=Crops&district=Gadag
+       │
+       ▼
+[ Server returns JSON array of populated posts ]
+       │
+       ▼
+[ setPosts(res.data.posts) ] ---> React re-renders <PostCard /> list with badges & author info
+```
+
+### 2. How are Optimistic Updates Managed in State?
+- **Create:** Newly created post returned from `POST /api/posts` is prepended to state: `setPosts(prev => [newPost, ...prev])`.
+- **Edit:** Modified post returned from `PUT /api/posts/:id` replaces the existing record: `setPosts(prev => prev.map(p => p._id === id ? updated : p))`.
+- **Delete:** Deleted post ID from `DELETE /api/posts/:id` is filtered out: `setPosts(prev => prev.filter(p => p._id !== id))`.
+
+---
+
+## 🔌 Day 5 Frontend Component Reference
+
+| Component | File Path | Description |
+| :--- | :--- | :--- |
+| **Feed Page** | `client/src/pages/Feed.jsx` | Main community dashboard with category pills, search bar, sorting, widgets, and post list |
+| **Create Post Modal** | `client/src/components/CreatePostModal.jsx` | Interactive composer with crop pills, category select, image previews, and announcement toggle |
+| **Edit Post Modal** | `client/src/components/EditPostModal.jsx` | Pre-populated modal to modify post contents and categories |
+| **Post Card** | `client/src/components/PostCard.jsx` | Feed card displaying author info, announcement ribbon, tags, image, and owner actions |
+
+---
+
+## 📂 Updated Repository Structure
+
+```
+AgriChat/
+├── client/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx             # Updated with direct Feed navigation
+│   │   │   ├── PostCard.jsx           # Individual post card with author & actions (Day 5)
+│   │   │   ├── CreatePostModal.jsx    # Post creator with crop suggestions (Day 5)
+│   │   │   └── EditPostModal.jsx      # Post editor modal (Day 5)
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── Feed.jsx               # Community Feed dashboard (Day 5)
+│   │   │   ├── Login.jsx
+│   │   │   ├── Register.jsx
+│   │   │   ├── Profile.jsx
+│   │   │   ├── ForgotPassword.jsx
+│   │   │   └── ResetPassword.jsx
+│   │   ├── services/
+│   │   │   └── api.js
+│   │   ├── App.jsx                    # Wired with default Feed view
+│   │   └── index.css                  # Feed & Modal styling rules
+│   └── package.json
+├── server/
+│   ├── config/db.js
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   └── postController.js
+│   ├── middleware/
+│   │   └── authMiddleware.js
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Post.js
+│   │   └── Comment.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   └── postRoutes.js
+│   ├── seeder.js
+│   ├── .env
+│   ├── package.json
+│   └── server.js
+├── .gitignore
+├── PROJECT_JOURNEY.md                 # 10-Day Complete Journey
+└── README.md
+```
+
+---
+
+## 🎤 Day 5 Interview Questions & Answers
+
+#### **Q1: Why is `useCallback` used for the `fetchPosts` function in the Feed component?**
+> **Answer:** In React, functions defined inside components are recreated on every render. Passing an inline function or referencing it in a `useEffect` dependency array causes unnecessary API calls or infinite re-render loops. Wrapping `fetchPosts` with `useCallback` ensures that the function identity only changes when its actual dependencies (`selectedCategory`, `selectedDistrict`, `searchQuery`, `sortBy`) change.
+
+#### **Q2: How do we conditionally render Edit & Delete options securely on the frontend?**
+> **Answer:** In `PostCard.jsx`, we inspect the authenticated user: `const isOwner = user && (post.author?._id === user.id || user.role === 'admin')`. If `isOwner` is false, the action menu is not rendered in the DOM. Furthermore, the backend endpoint `PUT /api/posts/:id` independently validates the JWT to guarantee security even if API calls are forged.
+
+#### **Q3: What is the advantage of using a dedicated modal over an inline form for post creation?**
+> **Answer:** A modal isolates complex form state (photo selection, category dropdowns, tag tokens, announcement flags) from the main feed DOM, preventing the feed from lagging while typing and providing a focused, accessible writing experience on both mobile and desktop screens.
+
+---
+
 ## 🏃 How to Run Frontend & Backend
 
-### 1. Seed Demo Data (Optional):
+### 1. Seed Demo Data:
 ```bash
 cd server
 npm run data:seed
@@ -429,11 +562,12 @@ npm run dev
 
 ---
 
-## 🔮 Next Step (Day 5)
-- **Core Feed & Post CRUD (Frontend):**
-  - Create Post modal/box (category dropdown, crop tag input, image upload preview).
-  - Feed view with dynamic category filters (Crops, Pest Control, Weather, Market Prices, Schemes).
-  - Farmer post cards with author badges, location tags, and post edit/delete actions.
-  - Search bar and sorting controls (Newest / Most Popular).
+## 🔮 Next Step (Day 6)
+- **Social Interactions: Likes & Comments:**
+  - Like/Unlike toggle API (`PUT /api/posts/:id/like`).
+  - Comment CRUD APIs (`POST /api/posts/:id/comments`, `GET /api/posts/:id/comments`, `DELETE /api/comments/:id`).
+  - Real-time comment drawer / accordion on post cards.
+  - Interactive like animations and heart counters.
+
 
 
