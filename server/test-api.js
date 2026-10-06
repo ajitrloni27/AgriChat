@@ -2,7 +2,6 @@
  * AgriChat - Automated System & Model Verification Test Suite
  * Day 10 - Testing & Quality Assurance
  */
-
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -181,5 +180,4 @@ async function runTests() {
     process.exit(1);
   }
 }
-
 runTests();

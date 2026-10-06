@@ -9,6 +9,13 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState(localStorage.getItem('agrichat_lang') || 'en');
 
+  // Language toggle function
+  const toggleLanguage = () => {
+    const nextLang = language === 'en' ? 'kn' : 'en';
+    setLanguage(nextLang);
+    localStorage.setItem('agrichat_lang', nextLang);
+  };
+
   // Fetch logged in user on initial load if token exists
   useEffect(() => {
     const fetchUser = async () => {

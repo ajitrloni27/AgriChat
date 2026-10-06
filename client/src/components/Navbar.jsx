@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Sprout, LogOut, User as UserIcon, Languages, Users } from 'lucide-react';
+import { Sprout, LogOut, User as UserIcon, Languages, Users, Shield } from 'lucide-react';
 
 const Navbar = ({ activeTab, setActiveTab }) => {
   const { user, isAuthenticated, logout, language, toggleLanguage } = useAuth();
