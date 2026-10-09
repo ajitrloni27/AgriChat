@@ -9,7 +9,7 @@
 
 > **AgriChat** is a production-grade, bilingual (English & Kannada) full-stack MERN platform built to empower farming communities. It connects rural farmers, agronomy scientists, and agricultural administrators for real-time crop disease diagnosis, Mandi commodity pricing, weather forecasts, government scheme alerts, and peer-to-peer knowledge sharing.
 
----
+--- 
 
 ## 📸 Platform Highlights & Features
 
