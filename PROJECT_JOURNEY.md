@@ -6,7 +6,7 @@
 
 ---
 
-## 🗺️ 10-Day Progress Tracker
+## 🗺️ 10-Day Progress Tracker 
 
 - [x] **Day 1: Project Setup & Database Design** *(Completed)*
 - [x] **Day 2: User Authentication (Backend & Frontend)** *(Completed)*
