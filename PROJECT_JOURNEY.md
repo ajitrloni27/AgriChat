@@ -1,7 +1,7 @@
 # 🌾 AgriChat: 10-Day MERN Stack Project Journey & Guide
 
 > **Project Type:** Full-Stack Web Application (Community Platform for Farmers)  
-> **Tech Stack:** MongoDB, Express.js, React.js, Node.js (MERN)  
+> **Tech Stack:** MongoDB, Express.js, React.js, Node.js (MERN)    
 > **Repository:** [AgriChat](https://github.com/ajitrloni27/AgriChat)
 
 ---
