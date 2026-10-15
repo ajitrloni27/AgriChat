@@ -7,7 +7,7 @@
 [![Bilingual](https://img.shields.io/badge/Language-English%20%7C%20ಕನ್ನಡ-FF9933?style=for-the-badge)](https://github.com/ajitrloni27/AgriChat)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue?style=for-the-badge)](https://opensource.org/licenses/ISC)
 
-> **AgriChat** is a production-grade, bilingual (English & Kannada) full-stack MERN platform built to empower farming communities. It connects rural farmers, agronomy scientists, and agricultural administrators for real-time crop disease diagnosis, Mandi commodity pricing, weather forecasts, government scheme alerts, and peer-to-peer knowledge sharing.
+> **AgriChat** is a production-grade, bilingual (English & Kannada) full-stack MERN platform built to empower farming communities. It connects rural farmers, agronomy scientists, and agricultural administrators for real-time crop disease diagnosis, Mandi commodity pricing, weather forecasts, government scheme alerts, and peer-to-peer knowledge sharing.  
 
 --- 
 
